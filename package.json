@@ -1,12 +1,15 @@
 {
   "name": "hardhat-project",
   "devDependencies": {
+    "@nomicfoundation/hardhat-ethers": "^3.0.0",
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
-    "hardhat": "^2.23.0"
+    "hardhat": "^2.23.0",
+    "rlp": "^3.0.0"
   },
   "dependencies": {
-    "@ethereumjs/common": "^4.4.0",
-    "@ethereumjs/tx": "^5.4.0",
-    "@ethereumjs/util": "^9.1.0"
+    "@ethereumjs/common": "link:../ethereumjs-monorepo/packages/common",
+    "@ethereumjs/tx": "link:../ethereumjs-monorepo/packages/tx",
+    "@ethereumjs/util": "^9.1.0",
+    "ethers": "^6.13.5"
   }
 }

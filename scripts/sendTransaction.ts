@@ -2,10 +2,10 @@ import { ethers } from "hardhat";
 import * as rlp from "rlp";
 import configs from "./../config/config";
 import {
-  EOACodeEIP7702Transaction,
+  createEOACode7702Tx,
   AuthorizationListItem,
 } from "@ethereumjs/tx";
-import { Common, Chain, Hardfork } from "@ethereumjs/common";
+import { Sepolia, Hardfork,createCustomCommon } from "@ethereumjs/common";
 import { hexToBytes, bigIntToHex, bytesToHex, Address } from "@ethereumjs/util";
 import { getBytes } from "ethers";
 
@@ -35,12 +35,11 @@ async function main() {
   const auth: AuthorizationListItem = {
     chainId: bigIntToHex(chainId),
     address: logicAddress,
-    nonce: [
+    nonce:
       bigIntToHex(BigInt(authNonce)) === "0x0"
         ? "0x"
         : bigIntToHex(BigInt(authNonce)),
-    ],
-    yParity: bigIntToHex(BigInt(v) - BigInt(27)) === '0x0' ? '0x' : '0x1',
+    yParity: bigIntToHex(BigInt(v) - BigInt(27)) === "0x0" ? "0x" : "0x1",
     r: bigIntToHex(BigInt(r)),
     s: bigIntToHex(BigInt(s)),
   };
@@ -66,14 +65,11 @@ async function main() {
     authorizationList,
   };
 
-  // 使用 EthereumJS 创建交易对象
-  const common = new Common({
-    chain: Chain.Sepolia, // 你可以换成 Chain.Mainnet, Chain.Hardhat 等
-    hardfork: Hardfork.Cancun,
-    eips: [7702], // 👈 重点：必须启用 EIP-7702
-  });
-  const tx = EOACodeEIP7702Transaction.fromTxData(txData, { common });
-
+  const commonWithCustomChainId = createCustomCommon({chainId: auth.chainId}, Sepolia, {
+    eips: [7702],
+    hardfork: Hardfork.Prague,
+  })
+  const tx = createEOACode7702Tx(txData, {common: commonWithCustomChainId});
   const signedTx = tx.sign(hexToBytes(configs.sepolia.accounts[0]));
   console.log(signedTx);
   const rawTx = signedTx.serialize();
@@ -84,6 +80,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error(error);
+  console.error("Transaction Error:", error);
   process.exitCode = 1;
 });

@@ -67,14 +67,13 @@ async function main() {
 
   const commonWithCustomChainId = createCustomCommon({chainId: auth.chainId}, Sepolia, {
     eips: [7702],
-    hardfork: Hardfork.Prague,
+    hardfork: Hardfork.Cancun,
   })
   const tx = createEOACode7702Tx(txData, {common: commonWithCustomChainId});
   const signedTx = tx.sign(hexToBytes(configs.sepolia.accounts[0]));
   console.log(signedTx);
   const rawTx = signedTx.serialize();
   console.log("Raw RLP tx:", bytesToHex(rawTx));
-
   const txHash = await signer.provider.broadcastTransaction(bytesToHex(rawTx));
   console.log("Transaction hash:", txHash);
 }

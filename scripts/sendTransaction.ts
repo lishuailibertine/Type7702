@@ -40,7 +40,7 @@ async function main() {
         ? "0x"
         : bigIntToHex(BigInt(authNonce)),
     ],
-    yParity: bigIntToHex(BigInt(v % 2)),
+    yParity: bigIntToHex(BigInt(v) - BigInt(27)) === '0x0' ? '0x' : '0x1',
     r: bigIntToHex(BigInt(r)),
     s: bigIntToHex(BigInt(s)),
   };
@@ -76,12 +76,9 @@ async function main() {
   console.log(tx);
   const signedTx = tx.sign(hexToBytes(configs.sepolia.accounts[0]));
   const rawTx = signedTx.serialize();
-  const rawTxHex = "0x04" + Buffer.from(rawTx).toString("hex");
-  console.log("Raw RLP tx:", rawTxHex);
+  console.log("Raw RLP tx:", bytesToHex(rawTx));
 
-  const txHash = await signer.provider.send("eth_sendRawTransaction", [
-    rawTxHex,
-  ]);
+  const txHash = await signer.provider.broadcastTransaction(bytesToHex(rawTx));
   console.log("Transaction hash:", txHash);
 }
 

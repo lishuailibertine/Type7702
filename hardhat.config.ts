@@ -1,6 +1,6 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
-const configs = require("./config/config");
+import configs from "./config/config";
 const config: HardhatUserConfig = {
   solidity: "0.8.28",
   networks: {

@@ -73,8 +73,9 @@ async function main() {
     eips: [7702], // 👈 重点：必须启用 EIP-7702
   });
   const tx = EOACodeEIP7702Transaction.fromTxData(txData, { common });
-  console.log(tx);
+
   const signedTx = tx.sign(hexToBytes(configs.sepolia.accounts[0]));
+  console.log(signedTx);
   const rawTx = signedTx.serialize();
   console.log("Raw RLP tx:", bytesToHex(rawTx));
 

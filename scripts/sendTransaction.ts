@@ -6,7 +6,7 @@ import {
   AuthorizationListItem,
 } from "@ethereumjs/tx";
 import { Sepolia, Hardfork,createCustomCommon } from "@ethereumjs/common";
-import { hexToBytes, bigIntToHex, bytesToHex, Address } from "@ethereumjs/util";
+import { hexToBytes, bigIntToHex, bytesToHex, Address, ecsign} from "@ethereumjs/util";
 import { getBytes } from "ethers";
 
 async function main() {
@@ -29,8 +29,7 @@ async function main() {
   const msgHash = ethers.keccak256(
     Buffer.concat([Buffer.from("05", "hex"), authMessage])
   );
-  const sig = await signer.signMessage(ethers.getBytes(msgHash));
-  const { v, r, s } = ethers.Signature.from(sig);
+  const signature = ecsign(ethers.getBytes(msgHash), hexToBytes(configs.sepolia.accounts[0]));
 
   const auth: AuthorizationListItem = {
     chainId: bigIntToHex(chainId),
@@ -39,9 +38,9 @@ async function main() {
       bigIntToHex(BigInt(authNonce)) === "0x0"
         ? "0x"
         : bigIntToHex(BigInt(authNonce)),
-    yParity: bigIntToHex(BigInt(v) - BigInt(27)) === "0x0" ? "0x" : "0x1",
-    r: bigIntToHex(BigInt(r)),
-    s: bigIntToHex(BigInt(s)),
+    yParity:bigIntToHex(signature.v - BigInt(27)) === '0x0' ? '0x' : '0x1',
+    r: bytesToHex(signature.r),
+    s: bytesToHex(signature.s),
   };
 
   const authorizationList = [auth];

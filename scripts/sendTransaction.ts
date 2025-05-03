@@ -23,7 +23,7 @@ async function main() {
   // ---- 1. 构造授权 ----
   const logicAddress = "0x0b6cf3840d0e8db89bd4088d55a612361983f11d";
   const authNonce = await signer.provider.getTransactionCount(
-    await signer.getAddress()
+    await signer.getAddress(), 'pending'
   );
   const authMessage = rlp.encode([chainId, logicAddress, authNonce]);
   const msgHash = ethers.keccak256(
@@ -46,9 +46,8 @@ async function main() {
   const authorizationList = [auth];
 
   // ---- 2. 构造交易结构 ----
-  const txNonce = await signer.provider.getTransactionCount(
-    await signer.getAddress()
-  );
+  const txNonce = 176;
+  
   const feeData = await signer.provider.getFeeData();
 
   const txData = {
@@ -57,7 +56,7 @@ async function main() {
     maxPriorityFeePerGas: feeData.maxPriorityFeePerGas ?? 1n,
     maxFeePerGas: feeData.maxFeePerGas ?? 1n,
     gasLimit,
-    to: Address.fromString(signerAddress),
+    to: Address.fromString(logicAddress),
     value,
     data: getBytes(data),
     accessList: [],
@@ -73,8 +72,9 @@ async function main() {
   console.log(signedTx);
   const rawTx = signedTx.serialize();
   console.log("Raw RLP tx:", bytesToHex(rawTx));
-  const txHash = await signer.provider.broadcastTransaction(bytesToHex(rawTx));
-  console.log("Transaction hash:", txHash);
+  // https://sepolia.etherscan.io/tx/0x5ad6f51a8b665549a68303d988409399e33411c4e02241da9f5f7e9e0ed36c18
+  // const txHash = await signer.provider.broadcastTransaction(bytesToHex(rawTx));
+  // console.log("Transaction hash:", txHash);
 }
 
 main().catch((error) => {

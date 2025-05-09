@@ -4,9 +4,9 @@ import configs from "./../config/config";
 import {
   createEOACode7702Tx,
 } from "@ethereumjs/tx";
-import { Sepolia, Hardfork,createCustomCommon} from "@ethereumjs/common";
-import { hexToBytes, bigIntToHex, bytesToHex, createAddressFromString, EOACode7702AuthorizationListItem} from "@ethereumjs/util";
-import { getBytes } from "ethers";
+import { Mainnet, Hardfork,createCustomCommon} from "@ethereumjs/common";
+import { hexToBytes, bigIntToHex, bigIntToBytes, bytesToHex, intToBytes, createAddressFromString, EOACode7702AuthorizationListItem} from "@ethereumjs/util";
+import { encodeRlp } from "ethers";
 import { secp256k1 } from "ethereum-cryptography/secp256k1.js";
 async function main() {
   const [signer] = await ethers.getSigners();
@@ -20,10 +20,11 @@ async function main() {
   const data = iface.encodeFunctionData("doSomething", ["hello 7702"]);
 
   // ---- 1. 构造授权 ----
-  const logicAddress = "0x0b6cf3840d0e8db89bd4088d55a612361983f11d";
+  const logicAddress = "0b6cf3840d0e8db89bd4088d55a612361983f11d";
   const authNonce = await signer.provider.getTransactionCount(
     await signer.getAddress(), 'pending'
   );
+  encodeRlp([bigIntToBytes(chainId), hexToBytes(`0x${logicAddress}`), intToBytes(authNonce)])
   const authMessage = rlp.encode([chainId, logicAddress, authNonce]);
   const msgHash = ethers.keccak256(
     Buffer.concat([Buffer.from("05", "hex"), authMessage])
@@ -32,22 +33,22 @@ async function main() {
 
   const auth: EOACode7702AuthorizationListItem = {
     chainId: bigIntToHex(chainId),
-    address: logicAddress,
+    address: `0x${logicAddress}`,
     nonce:
       bigIntToHex(BigInt(authNonce)) === "0x0"
         ? "0x"
         : bigIntToHex(BigInt(authNonce)),
-    yParity: bigIntToHex(BigInt(signature.recovery) - BigInt(27)) === '0x0' ? '0x' : '0x1',
+    yParity: bigIntToHex(BigInt(signature.recovery)),
     r: bigIntToHex(signature.r),
     s: bigIntToHex(signature.s),
   };
-
+  console.log("Authorization:", auth);
   const authorizationList = [auth];
 
   // ---- 2. 构造交易结构 ----
   const txNonce = await signer.provider.getTransactionCount(
     await signer.getAddress()
-  ) + 1;
+  );
   
   const feeData = await signer.provider.getFeeData();
 
@@ -59,12 +60,11 @@ async function main() {
     gasLimit,
     to: createAddressFromString(signer.address),
     value,
-    data: getBytes(data),
     accessList: [],
     authorizationList,
   };
 
-  const commonWithCustomChainId = createCustomCommon({chainId: auth.chainId}, Sepolia, {
+  const commonWithCustomChainId = createCustomCommon({chainId: auth.chainId}, Mainnet, {
     eips: [7702],
     hardfork: Hardfork.Cancun,
   })

@@ -29,7 +29,7 @@ async function main() {
   
   const unsignedJSONItem: EOACode7702AuthorizationListItemUnsigned = {
     chainId: bigIntToHex(chainId),
-    address: `0x${zeroAddress}`,
+    address: `0x${logicAddress}`,
     nonce: intToHex(authNonce),
   }
   const signedFromBytes = eoaCode7702SignAuthorization(unsignedJSONItem, hexToBytes(`0x${configs.sepolia.accounts[1]}`));
@@ -50,7 +50,7 @@ async function main() {
     maxPriorityFeePerGas: feeData.maxPriorityFeePerGas ?? 1n,
     maxFeePerGas: feeData.maxFeePerGas ?? 1n,
     gasLimit,
-    to: createAddressFromString(authAddress),
+    to: createAddressFromString(signerAddress),
     value,
     authorizationList,
   };

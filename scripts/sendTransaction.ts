@@ -5,7 +5,11 @@ import {
   createEOACode7702Tx,
 } from "@ethereumjs/tx";
 import { Mainnet, Hardfork,createCustomCommon} from "@ethereumjs/common";
-import { hexToBytes, bigIntToHex, bigIntToBytes, bytesToHex, intToBytes, createAddressFromString, EOACode7702AuthorizationListItem} from "@ethereumjs/util";
+import { hexToBytes, bigIntToHex, bigIntToBytes, bytesToHex, intToBytes, intToHex, createAddressFromString,
+   EOACode7702AuthorizationListItem,
+   EOACode7702AuthorizationListItemUnsigned,
+   eoaCode7702SignAuthorization,
+   eoaCode7702AuthorizationHashedMessageToSign} from "@ethereumjs/util";
 import { encodeRlp } from "ethers";
 import { secp256k1 } from "ethereum-cryptography/secp256k1.js";
 async function main() {
@@ -24,26 +28,16 @@ async function main() {
   const authNonce = await signer.provider.getTransactionCount(
     await signer.getAddress(), 'pending'
   );
-  encodeRlp([bigIntToBytes(chainId), hexToBytes(`0x${logicAddress}`), intToBytes(authNonce)])
-  const authMessage = rlp.encode([chainId, logicAddress, authNonce]);
-  const msgHash = ethers.keccak256(
-    Buffer.concat([Buffer.from("05", "hex"), authMessage])
-  );
-  const signature = secp256k1.sign(ethers.getBytes(msgHash), hexToBytes(`0x${configs.sepolia.accounts[0]}`));
-
-  const auth: EOACode7702AuthorizationListItem = {
+  
+  const unsignedJSONItem: EOACode7702AuthorizationListItemUnsigned = {
     chainId: bigIntToHex(chainId),
     address: `0x${logicAddress}`,
-    nonce:
-      bigIntToHex(BigInt(authNonce)) === "0x0"
-        ? "0x"
-        : bigIntToHex(BigInt(authNonce)),
-    yParity: bigIntToHex(BigInt(signature.recovery)),
-    r: bigIntToHex(signature.r),
-    s: bigIntToHex(signature.s),
-  };
-  console.log("Authorization:", auth);
-  const authorizationList = [auth];
+    nonce: intToHex(authNonce),
+  }
+  const signedFromBytes = eoaCode7702SignAuthorization(unsignedJSONItem, hexToBytes(`0x${configs.sepolia.accounts[0]}`));
+ 
+  console.log("Authorization:", signedFromBytes);
+  const authorizationList = [signedFromBytes];
 
   // ---- 2. 构造交易结构 ----
   const txNonce = await signer.provider.getTransactionCount(
@@ -64,13 +58,12 @@ async function main() {
     authorizationList,
   };
 
-  const commonWithCustomChainId = createCustomCommon({chainId: auth.chainId}, Mainnet, {
+  const commonWithCustomChainId = createCustomCommon({chainId: bigIntToHex(chainId)}, Mainnet, {
     eips: [7702],
     hardfork: Hardfork.Cancun,
   })
   const tx = createEOACode7702Tx(txData, {common: commonWithCustomChainId});
   const signedTx = tx.sign(hexToBytes((`0x${configs.sepolia.accounts[0]}`)));
-  console.log(signedTx);
   const rawTx = signedTx.serialize();
   console.log("Raw RLP tx:", bytesToHex(rawTx));
   // https://sepolia.etherscan.io/tx/0x5ad6f51a8b665549a68303d988409399e33411c4e02241da9f5f7e9e0ed36c18

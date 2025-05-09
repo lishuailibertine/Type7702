@@ -7,9 +7,10 @@
     "rlp": "^3.0.0"
   },
   "dependencies": {
-    "@ethereumjs/common": "link:../ethereumjs-monorepo/packages/common",
-    "@ethereumjs/tx": "link:../ethereumjs-monorepo/packages/tx",
-    "@ethereumjs/util": "^9.1.0",
+    "@ethereumjs/common": "^10.0.0",
+    "@ethereumjs/tx": "^10.0.0",
+    "@ethereumjs/util": "^10.0.0",
+    "ethereum-cryptography": "^3.2.0",
     "ethers": "^6.13.5"
   }
 }

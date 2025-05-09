@@ -3,12 +3,11 @@ import * as rlp from "rlp";
 import configs from "./../config/config";
 import {
   createEOACode7702Tx,
-  AuthorizationListItem,
 } from "@ethereumjs/tx";
-import { Sepolia, Hardfork,createCustomCommon } from "@ethereumjs/common";
-import { hexToBytes, bigIntToHex, bytesToHex, Address, ecsign} from "@ethereumjs/util";
+import { Sepolia, Hardfork,createCustomCommon} from "@ethereumjs/common";
+import { hexToBytes, bigIntToHex, bytesToHex, createAddressFromString, EOACode7702AuthorizationListItem} from "@ethereumjs/util";
 import { getBytes } from "ethers";
-
+import { secp256k1 } from "ethereum-cryptography/secp256k1.js";
 async function main() {
   const [signer] = await ethers.getSigners();
   const chainId = (await signer.provider.getNetwork()).chainId;
@@ -29,24 +28,26 @@ async function main() {
   const msgHash = ethers.keccak256(
     Buffer.concat([Buffer.from("05", "hex"), authMessage])
   );
-  const signature = ecsign(ethers.getBytes(msgHash), hexToBytes(configs.sepolia.accounts[0]));
+  const signature = secp256k1.sign(ethers.getBytes(msgHash), hexToBytes(`0x${configs.sepolia.accounts[0]}`));
 
-  const auth: AuthorizationListItem = {
+  const auth: EOACode7702AuthorizationListItem = {
     chainId: bigIntToHex(chainId),
     address: logicAddress,
     nonce:
       bigIntToHex(BigInt(authNonce)) === "0x0"
         ? "0x"
         : bigIntToHex(BigInt(authNonce)),
-    yParity:bigIntToHex(signature.v - BigInt(27)) === '0x0' ? '0x' : '0x1',
-    r: bytesToHex(signature.r),
-    s: bytesToHex(signature.s),
+    yParity: bigIntToHex(BigInt(signature.recovery) - BigInt(27)) === '0x0' ? '0x' : '0x1',
+    r: bigIntToHex(signature.r),
+    s: bigIntToHex(signature.s),
   };
 
   const authorizationList = [auth];
 
   // ---- 2. 构造交易结构 ----
-  const txNonce = 176;
+  const txNonce = await signer.provider.getTransactionCount(
+    await signer.getAddress()
+  ) + 1;
   
   const feeData = await signer.provider.getFeeData();
 
@@ -56,7 +57,7 @@ async function main() {
     maxPriorityFeePerGas: feeData.maxPriorityFeePerGas ?? 1n,
     maxFeePerGas: feeData.maxFeePerGas ?? 1n,
     gasLimit,
-    to: Address.fromString(logicAddress),
+    to: createAddressFromString(signer.address),
     value,
     data: getBytes(data),
     accessList: [],
@@ -68,7 +69,7 @@ async function main() {
     hardfork: Hardfork.Cancun,
   })
   const tx = createEOACode7702Tx(txData, {common: commonWithCustomChainId});
-  const signedTx = tx.sign(hexToBytes(configs.sepolia.accounts[0]));
+  const signedTx = tx.sign(hexToBytes((`0x${configs.sepolia.accounts[0]}`)));
   console.log(signedTx);
   const rawTx = signedTx.serialize();
   console.log("Raw RLP tx:", bytesToHex(rawTx));

@@ -6,12 +6,8 @@ import {
 } from "@ethereumjs/tx";
 import { Mainnet, Hardfork,createCustomCommon} from "@ethereumjs/common";
 import { hexToBytes, bigIntToHex, bigIntToBytes, bytesToHex, intToBytes, intToHex, createAddressFromString,
-   EOACode7702AuthorizationListItem,
    EOACode7702AuthorizationListItemUnsigned,
-   eoaCode7702SignAuthorization,
-   eoaCode7702AuthorizationHashedMessageToSign} from "@ethereumjs/util";
-import { encodeRlp } from "ethers";
-import { secp256k1 } from "ethereum-cryptography/secp256k1.js";
+   eoaCode7702SignAuthorization} from "@ethereumjs/util";
 async function main() {
   const [signer] = await ethers.getSigners();
   const chainId = (await signer.provider.getNetwork()).chainId;
@@ -25,16 +21,18 @@ async function main() {
 
   // ---- 1. 构造授权 ----
   const logicAddress = "0b6cf3840d0e8db89bd4088d55a612361983f11d";
+  const authAddress = "0x624200b0E180495fb97320AA7d9fC8646B5f1B28"
+  const zeroAddress = "0000000000000000000000000000000000000000"
   const authNonce = await signer.provider.getTransactionCount(
-    await signer.getAddress(), 'pending'
+    authAddress, 'pending'
   );
   
   const unsignedJSONItem: EOACode7702AuthorizationListItemUnsigned = {
     chainId: bigIntToHex(chainId),
-    address: `0x${logicAddress}`,
+    address: `0x${zeroAddress}`,
     nonce: intToHex(authNonce),
   }
-  const signedFromBytes = eoaCode7702SignAuthorization(unsignedJSONItem, hexToBytes(`0x${configs.sepolia.accounts[0]}`));
+  const signedFromBytes = eoaCode7702SignAuthorization(unsignedJSONItem, hexToBytes(`0x${configs.sepolia.accounts[1]}`));
  
   console.log("Authorization:", signedFromBytes);
   const authorizationList = [signedFromBytes];
@@ -52,9 +50,8 @@ async function main() {
     maxPriorityFeePerGas: feeData.maxPriorityFeePerGas ?? 1n,
     maxFeePerGas: feeData.maxFeePerGas ?? 1n,
     gasLimit,
-    to: createAddressFromString(signer.address),
+    to: createAddressFromString(authAddress),
     value,
-    accessList: [],
     authorizationList,
   };
 

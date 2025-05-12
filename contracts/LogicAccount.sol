@@ -2,9 +2,17 @@
 pragma solidity ^0.8.28;
 
 contract LogicAccount {
-    event Called(address sender, string message);
+    uint256 public count;
+    function increment() external {
+        count += 1;
+    }
 
-    function doSomething(string memory msgText) external {
-        emit Called(msg.sender, msgText);
+    function setCount(uint256 newCount) external {
+        count = newCount;
+    }
+
+    // 获取状态
+    function getCount() external view returns (uint256) {
+        return count;
     }
 }

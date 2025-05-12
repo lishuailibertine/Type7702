@@ -17,12 +17,11 @@ async function main() {
 
   // 构造 calldata
   const iface = new ethers.Interface(["function doSomething(string)"]);
-  const data = iface.encodeFunctionData("doSomething", ["hello 7702"]);
 
   // ---- 1. 构造授权 ----
-  const logicAddress = "0b6cf3840d0e8db89bd4088d55a612361983f11d";
-  const authAddress = "0x624200b0E180495fb97320AA7d9fC8646B5f1B28"
-  const zeroAddress = "0000000000000000000000000000000000000000"
+  const logicAddress = "7403b33252d9d70175753a0d786554e8b7f6600e";
+  const authAddress = "0x163F94fcC8A1b9f01Efa22619cA3765178bC973e"
+  const zeroAddress = "0x0000000000000000000000000000000000000000"
   const authNonce = await signer.provider.getTransactionCount(
     authAddress, 'pending'
   );
@@ -32,9 +31,9 @@ async function main() {
     address: `0x${logicAddress}`,
     nonce: intToHex(authNonce),
   }
+  console.log("Unsigned JSON Item:", unsignedJSONItem);
   const signedFromBytes = eoaCode7702SignAuthorization(unsignedJSONItem, hexToBytes(`0x${configs.sepolia.accounts[1]}`));
  
-  console.log("Authorization:", signedFromBytes);
   const authorizationList = [signedFromBytes];
 
   // ---- 2. 构造交易结构 ----
@@ -50,7 +49,7 @@ async function main() {
     maxPriorityFeePerGas: feeData.maxPriorityFeePerGas ?? 1n,
     maxFeePerGas: feeData.maxFeePerGas ?? 1n,
     gasLimit,
-    to: createAddressFromString(signerAddress),
+    to: createAddressFromString(zeroAddress),
     value,
     authorizationList,
   };

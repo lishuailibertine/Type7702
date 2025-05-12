@@ -12,5 +12,12 @@
     "@ethereumjs/util": "^10.0.0",
     "ethereum-cryptography": "^3.2.0",
     "ethers": "^6.13.5"
+  },
+  "scripts": {
+    "test": "hardhat test",
+    "deploy": "hardhat run scripts/deploy.js --network sepolia",
+    "verify": "hardhat verify --network sepolia",
+    "build": "hardhat compile",
+    "start": "hardhat node"
   }
 }

@@ -15,7 +15,7 @@
   },
   "scripts": {
     "test": "hardhat test",
-    "deploy": "hardhat run scripts/deploy.js --network sepolia",
+    "run": "hardhat run scripts/deploy.js --network sepolia",
     "verify": "hardhat verify --network sepolia",
     "build": "hardhat compile",
     "start": "hardhat node"
